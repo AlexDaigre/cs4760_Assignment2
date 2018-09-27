@@ -9,14 +9,21 @@ void abortExecution(int status);
 
 int main (int argc, char *argv[]) {
     int numberOfloops = atoi(argv[1]);
-    printf("number of loops: %d\n", numberOfloops);
-    int sharedMemoryIntOne = atoi(argv[2]);
-    printf("SharedMem1: %d\n", sharedMemoryIntOne);
-    int sharedMemoryIntTwo = atoi(argv[3]);
-    printf("SharedMem2: %d\n", sharedMemoryIntTwo);
+    int clockShmId = atoi(argv[2]);
+
+    int* clockShmPtr = (int *) shmat(clockShmId, NULL, 0);
+    if ((int) clockShmPtr == -1) {
+        printf("shmat error in parrent\n");
+        abortExecution(1);
+    }
     
     for(int i = 0; i < numberOfloops; i++){
-        printf("Hi %d %d\n", sharedMemoryIntOne, sharedMemoryIntTwo);
+        clockShmPtr[1]++;
+        if (clockShmPtr[1] > 1000){
+            clockShmPtr[0]++;
+            clockShmPtr[1] -= 1000;
+        }
+        printf("S:%d MS:%d\n", clockShmPtr[0], clockShmPtr[1]);
     }
     
     abortExecution(0);

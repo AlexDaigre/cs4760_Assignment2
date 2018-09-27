@@ -44,17 +44,17 @@ int main (int argc, char *argv[]) {
         printf("shmat error in parrent\n");
         abortExecution(1);
     }
+    
+    int numberOfRepetitions = numberOfChildren * 1000000;
 
     for(int i = 0; i < numberOfChildren; i++){
         if (fork() == 0){
-            char numberOfChildrenString[12];
-            sprintf(numberOfChildrenString, "%d", numberOfChildren);
-            char alocatedIntOneString[12];
-            sprintf(alocatedIntOneString, "%d", clockShmPtr[0]);
-            char alocatedIntTwoString[12];
-            sprintf(alocatedIntTwoString, "%d", clockShmPtr[1]);
+            char numberOfRepetitionsString[12];
+            sprintf(numberOfRepetitionsString, "%d", numberOfRepetitions);
+            char clockShmIdString[12];
+            sprintf(clockShmIdString, "%d", clockShmId);
 
-            execlp("./worker","./worker", numberOfChildrenString, alocatedIntOneString, alocatedIntTwoString, NULL);
+            execlp("./worker","./worker", numberOfRepetitionsString, clockShmIdString, NULL);
 		    fprintf(stderr,"%s failed to exec worker!\n",argv[0]);
 		    exit(-1);
             abortExecution(0);
