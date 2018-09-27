@@ -2,6 +2,5 @@ Git: https://github.com/AlexDaigre/cs4760_Assignment2
 
     I was having difficulty implementing limiting the number 
 of processes running simultaniously and the signal handlers.
-My code for those, currently not working well, is located on
-the master branch of my git. What is included here dose not 
-contain this buggy code.
+Code is currently commented out to prevent problems when running
+for others and on shared resources.
