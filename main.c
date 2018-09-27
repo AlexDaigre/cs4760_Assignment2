@@ -7,9 +7,9 @@
 #include <sys/types.h>
 #include <sys/shm.h>
 
-void abortExecution(int status);
-void childClosed();
-int currentProcesses = 0;
+// void abortExecution(int status);
+// void childClosed();
+// int currentProcesses = 0;
 
 int main (int argc, char *argv[]) {
     int numberOfChildren = 0;
@@ -17,7 +17,7 @@ int main (int argc, char *argv[]) {
     // int maxProcesses = 1;
     int c;
 
-    signal(SIGCHLD, childClosed);
+    // signal(SIGCHLD, childClosed);
 
     while ((c = getopt (argc, argv, "hn:s:")) != -1){
         switch (c){
@@ -57,9 +57,10 @@ int main (int argc, char *argv[]) {
     
     int numberOfRepetitions = numberOfChildren * 1000000;
 
-    for(int i = 0; i < numberOfChildren; i++){
-        while (currentProcesses >= maxProcesses ){sleep(1);}
-        currentProcesses++;
+    int i;
+    for(i = 0; i < numberOfChildren; i++){
+        // while (currentProcesses >= maxProcesses ){sleep(1);}
+        // currentProcesses++;
         if (fork() == 0){
             char numberOfRepetitionsString[12];
             sprintf(numberOfRepetitionsString, "%d", numberOfRepetitions);
@@ -83,9 +84,9 @@ int main (int argc, char *argv[]) {
 }
 
 
-void childClosed(){
-    currentProcesses--;
-}
+// void childClosed(){
+    // currentProcesses--;
+// }
 
 // void abortExecution(int status){
 //     exit(status);
