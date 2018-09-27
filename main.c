@@ -17,7 +17,7 @@ int main (int argc, char *argv[]) {
         switch (c){
             case 'h':
                 printf("directions");
-                abortExecution(0);
+                exit(0);
                 break;
             case 'n':
                 numberOfChildren = atoi(optarg);
@@ -28,21 +28,25 @@ int main (int argc, char *argv[]) {
             case ':':
             default:
                 printf("there was an error with arguments");
-                abortExecution(1);
+                exit(1);
                 break;
         }
     }
+    printf ("numberOfChildren = %d, maxProcesses = %d\n", numberOfChildren, maxProcesses);
+    printf ("calculating time...");
+    
 
     int clockShmId = shmget(IPC_PRIVATE, 2*sizeof(int), IPC_CREAT | 0666);
     if (clockShmId < 0) {
         printf("shmget error in parrent\n");
-        abortExecution(1);
+        exit(1);
     }
 
     int* clockShmPtr = (int *) shmat(clockShmId, NULL, 0);
     if ((int) clockShmPtr == -1) {
         printf("shmat error in parrent\n");
-        abortExecution(1);
+        shmctl(clockShmId, IPC_RMID, NULL);
+        exit(1);
     }
     
     int numberOfRepetitions = numberOfChildren * 1000000;
@@ -56,15 +60,29 @@ int main (int argc, char *argv[]) {
 
             execlp("./worker","./worker", numberOfRepetitionsString, clockShmIdString, NULL);
 		    fprintf(stderr,"%s failed to exec worker!\n",argv[0]);
-		    exit(-1);
-            abortExecution(0);
+            shmctl(clockShmId, IPC_RMID, NULL);
+            shmdt(clockShmPtr);
+            exit(1);
         }
     }
 
-    printf ("numberOfChildren = %d, maxProcesses = %d\n", numberOfChildren, maxProcesses);
-    abortExecution(0);
+    printf("Main: S:%d MS:%d\n", clockShmPtr[0], clockShmPtr[1]);
+    shmctl(clockShmId, IPC_RMID, NULL);
+    shmdt(clockShmPtr);
+    exit(0);
 }
 
-void abortExecution(int status){
-    exit(status);
-}
+// void abortExecution(int status){
+//     exit(status);
+// }
+
+// void abortExecution(int status, int clockShmId){
+//     shmctl(clockShmId, IPC_RMID, NULL);
+//     exit(status);
+// }
+
+// void abortExecution(int status, int clockShmId, int clockShmPtr){
+//     shmctl(clockShmId, IPC_RMID, NULL);
+//     shmdt(clockShmPtr);
+//     exit(status);
+// }

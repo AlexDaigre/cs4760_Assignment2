@@ -14,7 +14,7 @@ int main (int argc, char *argv[]) {
     int* clockShmPtr = (int *) shmat(clockShmId, NULL, 0);
     if ((int) clockShmPtr == -1) {
         printf("shmat error in parrent\n");
-        abortExecution(1);
+        exit(1);
     }
     
     for(int i = 0; i < numberOfloops; i++){
@@ -26,9 +26,21 @@ int main (int argc, char *argv[]) {
         printf("S:%d MS:%d\n", clockShmPtr[0], clockShmPtr[1]);
     }
     
-    abortExecution(0);
+    shmdt(clockShmPtr);
+    exit(0);
 }
 
-void abortExecution(int status){
-    exit(status);
-}
+// void abortExecution(int status){
+//     exit(status);
+// }
+
+// void abortExecution(int status, int clockShmId){
+//     shmctl(clockShmId, IPC_RMID, NULL);
+//     exit(status);
+// }
+
+// void abortExecution(int status, int clockShmId, int clockShmPtr){
+//     shmctl(clockShmId, IPC_RMID, NULL);
+//     shmdt(clockShmPtr);
+//     exit(status);
+// }
