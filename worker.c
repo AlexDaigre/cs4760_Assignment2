@@ -13,7 +13,7 @@ int main (int argc, char *argv[]) {
 
     int* clockShmPtr = (int *) shmat(clockShmId, NULL, 0);
     if ((int) clockShmPtr == -1) {
-        printf("shmat error in parrent\n");
+        printf("shmat error in child\n");
         exit(1);
     }
     
@@ -23,7 +23,7 @@ int main (int argc, char *argv[]) {
             clockShmPtr[0]++;
             clockShmPtr[1] -= 1000;
         }
-        printf("S:%d MS:%d\n", clockShmPtr[0], clockShmPtr[1]);
+        // printf("S:%d MS:%d\n", clockShmPtr[0], clockShmPtr[1]);
     }
     
     shmdt(clockShmPtr);

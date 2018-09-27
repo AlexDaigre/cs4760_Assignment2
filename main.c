@@ -1,17 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
+#include <unistd.h>
 #include <sys/ipc.h>
-#include  <sys/types.h>
+#include <sys/types.h>
 #include <sys/shm.h>
 
 void abortExecution(int status);
+void childClosed();
+int currentProcesses = 0;
 
 int main (int argc, char *argv[]) {
     int numberOfChildren = 0;
     int maxProcesses = __INT32_MAX__;
-    int currentProcesses = 0;
+    // int maxProcesses = 1;
     int c;
+
+    signal(SIGCHLD, childClosed);
 
     while ((c = getopt (argc, argv, "hn:s:")) != -1){
         switch (c){
@@ -52,6 +58,8 @@ int main (int argc, char *argv[]) {
     int numberOfRepetitions = numberOfChildren * 1000000;
 
     for(int i = 0; i < numberOfChildren; i++){
+        while (currentProcesses >= maxProcesses ){sleep(1);}
+        currentProcesses++;
         if (fork() == 0){
             char numberOfRepetitionsString[12];
             sprintf(numberOfRepetitionsString, "%d", numberOfRepetitions);
@@ -66,10 +74,17 @@ int main (int argc, char *argv[]) {
         }
     }
 
+    // while (currentProcesses > 0 ){sleep(1);}
+
     printf("Main: S:%d MS:%d\n", clockShmPtr[0], clockShmPtr[1]);
     shmctl(clockShmId, IPC_RMID, NULL);
     shmdt(clockShmPtr);
     exit(0);
+}
+
+
+void childClosed(){
+    currentProcesses--;
 }
 
 // void abortExecution(int status){
