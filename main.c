@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <time.h>
 #include <unistd.h>
 #include <sys/ipc.h>
 #include <sys/types.h>
@@ -10,13 +11,15 @@
 void abortExecution(int status);
 void childClosed(int sig);
 int currentProcesses = 0;
+//acctually about 3 seconds(on my system). CLOCKS_PER_SECOND is a constant and 
+//  does not produce anything resembling real time.
+int maxTime = 20;
 
 int main (int argc, char *argv[]) {
     signal(SIGCHLD, childClosed);
 
     int numberOfChildren = 0;
-    int maxProcesses = __INT32_MAX__;
-    // int maxProcesses = 1;
+    int maxProcesses = 20;
     int c;
 
     while ((c = getopt (argc, argv, "hn:s:")) != -1){
@@ -29,7 +32,7 @@ int main (int argc, char *argv[]) {
                 numberOfChildren = atoi(optarg);
                 break;
             case 's':
-                maxProcesses = atoi(optarg);
+                maxProcesses = (atoi(optarg) > 20) ? 20 : atoi(optarg);
                 break;
             // case '?':
             // case ':':
@@ -57,24 +60,33 @@ int main (int argc, char *argv[]) {
     }
     
     int numberOfRepetitions = numberOfChildren * 1000000;
+    clock_t startTime = clock();
+    clock_t timeDiffrence;
+    int breakLoop = 0;
+    int i;
 
-    for(int i = 0; i < numberOfChildren; i++){
-        while (currentProcesses >= maxProcesses ){sleep(1);}
-        currentProcesses++;
-        if (fork() == 0){
-            char numberOfRepetitionsString[12];
-            sprintf(numberOfRepetitionsString, "%d", numberOfRepetitions);
-            char clockShmIdString[12];
-            sprintf(clockShmIdString, "%d", clockShmId);
+    do{
+        for(i = 0; i < numberOfChildren; i++){
+            while (currentProcesses >= maxProcesses ){sleep(1);}
+            currentProcesses++;
+            if (fork() == 0){
+                char numberOfRepetitionsString[12];
+                sprintf(numberOfRepetitionsString, "%d", numberOfRepetitions);
+                char clockShmIdString[12];
+                sprintf(clockShmIdString, "%d", clockShmId);
 
-            execlp("./worker","./worker", numberOfRepetitionsString, clockShmIdString, NULL);
-		    fprintf(stderr,"%s failed to exec worker!\n",argv[0]);
-            shmctl(clockShmId, IPC_RMID, NULL);
-            shmdt(clockShmPtr);
-            exit(1);
+                execlp("./worker","./worker", numberOfRepetitionsString, clockShmIdString, NULL);
+                fprintf(stderr,"%s failed to exec worker!\n",argv[0]);
+                shmctl(clockShmId, IPC_RMID, NULL);
+                shmdt(clockShmPtr);
+                exit(1);
+            }
+            timeDiffrence = clock() - startTime;
+            printf("number of processes: %d\ncurrent time elapsed: %ld\n", currentProcesses, (timeDiffrence * 1000 / CLOCKS_PER_SEC));
         }
-        // printf("number of processes: %d\n", currentProcesses);
-    }
+        breakLoop = (i < numberOfChildren) ? 0 : 1;
+    }while (((timeDiffrence * 1000 / CLOCKS_PER_SEC) < maxTime) && (breakLoop == 0));
+   
 
     // while (currentProcesses > 0 ){sleep(1);}
 
