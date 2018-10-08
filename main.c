@@ -8,21 +8,21 @@
 #include <sys/shm.h>
 
 void abortExecution(int status);
-void childClosed();
+void childClosed(int sig);
 int currentProcesses = 0;
 
 int main (int argc, char *argv[]) {
+    signal(SIGCHLD, childClosed);
+
     int numberOfChildren = 0;
     int maxProcesses = __INT32_MAX__;
     // int maxProcesses = 1;
     int c;
 
-    signal(SIGCHLD, childClosed);
-
     while ((c = getopt (argc, argv, "hn:s:")) != -1){
         switch (c){
             case 'h':
-                printf("directions");
+                printf("directions\n");
                 exit(0);
                 break;
             case 'n':
@@ -30,16 +30,17 @@ int main (int argc, char *argv[]) {
                 break;
             case 's':
                 maxProcesses = atoi(optarg);
-            case '?':
-            case ':':
+                break;
+            // case '?':
+            // case ':':
             default:
-                printf("there was an error with arguments");
+                printf("there was an error with arguments\n");
                 exit(1);
                 break;
         }
     }
     printf ("numberOfChildren = %d, maxProcesses = %d\n", numberOfChildren, maxProcesses);
-    printf ("calculating time...");
+    printf ("calculating time...\n");
     
 
     int clockShmId = shmget(IPC_PRIVATE, 2*sizeof(int), IPC_CREAT | 0666);
@@ -49,7 +50,7 @@ int main (int argc, char *argv[]) {
     }
 
     int* clockShmPtr = (int *) shmat(clockShmId, NULL, 0);
-    if ((int) clockShmPtr == -1) {
+    if ((long) clockShmPtr == -1) {
         printf("shmat error in parrent\n");
         shmctl(clockShmId, IPC_RMID, NULL);
         exit(1);
@@ -72,6 +73,7 @@ int main (int argc, char *argv[]) {
             shmdt(clockShmPtr);
             exit(1);
         }
+        // printf("number of processes: %d\n", currentProcesses);
     }
 
     // while (currentProcesses > 0 ){sleep(1);}
@@ -83,8 +85,9 @@ int main (int argc, char *argv[]) {
 }
 
 
-void childClosed(){
+void childClosed(int sig){
     currentProcesses--;
+    printf("Child Closed\n");
 }
 
 // void abortExecution(int status){
